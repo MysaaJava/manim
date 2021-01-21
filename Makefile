@@ -41,15 +41,15 @@ RUN_AS_SHELL=$(or $(POETRY_ACTIVE),$(if $(strip $(POETRY_USABLE)),,do))
 # runCommandOrModule 1:commandName 2:args 3:moduleNameIfDifferentFromCommandName
 runCommandOrModule= \
 	$(if $(shell command -v $1 2> /dev/null), \
-		$(shell $1 $2 ), \
-		$(shell python -m $(if $(strip $3), $3, $1) $2) \
+		$1 $2, \
+		python -m $(if $(strip $3), $3, $1) $2 \
 	)
 	
 # pyrun 1:commandName 2:args 3:moduleNameIfDifferentFromCommandName
 pyrun = \
 	$(if $(strip $(RUN_AS_SHELL)), \
 		$(call runCommandOrModule, $1, $2, $3), \
-		$(shell poetry run $1 $2) \
+		poetry run $1 $2 \
 	)
 
 install-hook:
@@ -73,14 +73,16 @@ install-prepush-hook: install-hook
 
 test: check
 check:
-	# Runs pytest in the project root
+	@echo Runs pytest in the project root
 	
-	@:$(call pyrun, pytest)
+	@$(eval torun := $(call pyrun,pytest))
+	$(torun)
 
 black:
-	# Runs black in the project root
+	@echo Runs black in the project root
 	
-	@:$(call pyrun, black, .)
+	@$(eval torun := $(call pyrun,black,.))
+	$(torun)
 
 docs-html:
 	# Builds the html docs using sphinx
@@ -89,7 +91,7 @@ docs-html:
 	
 	
 clean:
-	# Remove every temporary build or test file in the folder
+	@# Remove every temporary build or test file in the folder
 	git clean -Xf
 	cd docs && $(MAKE) clean
 	
